@@ -1,0 +1,26 @@
+name: golden
+
+# Gates the demo golden lock: freezes the deployed demo's byte-level exports and
+# headline figures so they cannot drift during the client-mode conversion. Runs
+# ONLY the golden (tests/test_demo_golden.py) — it needs base deps only (pytest +
+# stdlib, reads committed JSON), never lailara_engagement.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  golden:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test deps
+        run: pip install pytest
+      - name: Demo golden lock
+        run: python -m pytest tests/test_demo_golden.py -q

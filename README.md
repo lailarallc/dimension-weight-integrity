@@ -78,6 +78,27 @@ python -m pytest tests/ -v
 cd frontend && npm test
 ```
 
+### Client engagement use
+
+To validate a client's item master and compute its physical attributes locally
+(no database, no deploy), install the shared scaffold and run client mode:
+
+```
+python -m pip install -e ../engagement-template/lib
+python client_mode.py --config engagement.yml --input client-data/item_master.csv \
+    --out client-output [--final]
+```
+
+It reads CSV/XLSX tolerantly (SKU kept as text), runs a preflight that emits a
+branded **Data Readiness Report** if a required case dimension/weight column is
+missing, then computes cube, density, and NMFC freight class per SKU into a
+branded, provenance-footed, DRAFT-watermarked report in `client-output/`
+(gitignored). Required fields, mapping, and scope are in
+[`INPUT-SPEC.md`](INPUT-SPEC.md). `engagement.demo.yml` is a safe-to-deploy
+example (`demo: true`); a real `engagement.yml` is runtime-only and never
+deploys (`scripts/engagement_guard.py` enforces this). The four-system
+divergence and dollar-cost model below is the dbt pipeline and is unchanged.
+
 ### Deploy
 
 **Pushing to `main` deploys the site.** The Cloudflare Pages project is

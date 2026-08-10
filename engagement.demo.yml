@@ -1,0 +1,21 @@
+# Demo engagement config (safe to deploy: demo: true).
+#
+# Client mode is runtime-only and must never deploy with an ACTIVE config. This
+# demo config carries `demo: true`, so scripts/engagement_guard.py treats it as
+# safe. A real engagement uses engagement.yml (gitignored) without demo: true.
+client:
+  name: "Cinderhaven Provisions (demo)"
+engagement:
+  id: "DEMO-DIM-001"
+as_of_date: "2026-01-31"
+prepared_by: "Lailara LLC"
+demo: true
+columns:
+  sku: "SKU"
+  case_length_in: "Case Length (in)"
+  case_width_in: "Case Width (in)"
+  case_height_in: "Case Height (in)"
+  case_gross_weight_lb: "Case Gross Weight (lb)"
+  unit_net_weight_lb: "Unit Net Weight (lb)"
+  case_pack_qty: "Case Pack"
+  dtc_parcel_gross_lb: "DTC Parcel Weight (lb)"

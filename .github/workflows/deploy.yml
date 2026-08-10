@@ -22,6 +22,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Engagement guard
+        working-directory: ${{ github.workspace }}
+        run: python3 scripts/engagement_guard.py
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
