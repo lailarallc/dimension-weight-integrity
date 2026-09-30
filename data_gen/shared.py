@@ -9,6 +9,8 @@ import psycopg2
 import psycopg2.extras
 from psycopg2 import sql
 
+from data_gen import prod_guard
+
 SEED = 42
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent
@@ -74,10 +76,18 @@ def load_csvs_to_raw(conn, data_dir, tables, log=print):
             log(f"Loaded {table_name}: {rows_loaded} rows")
 
 
+def db_host_port():
+    """Target Postgres host and port (shared by the connection and the dbt guard)."""
+    return (os.environ.get("CINDERHAVEN_DB_HOST", "localhost"),
+            int(os.environ.get("CINDERHAVEN_DB_PORT", "5432")))
+
+
 def get_db_connection():
+    host, port = db_host_port()
+    prod_guard.check(host=host, port=port)  # refuses a fly tunnel to production
     return psycopg2.connect(
-        host=os.environ.get("CINDERHAVEN_DB_HOST", "localhost"),
-        port=int(os.environ.get("CINDERHAVEN_DB_PORT", "5432")),
+        host=host,
+        port=port,
         user=os.environ.get("CINDERHAVEN_DB_USER", "postgres"),
         password=os.environ.get("CINDERHAVEN_DB_PASSWORD", ""),
         dbname=os.environ.get("CINDERHAVEN_DB_NAME", "cinderhaven"),

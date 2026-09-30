@@ -8,7 +8,8 @@ import subprocess
 
 from dagster import asset, AssetExecutionContext
 
-from data_gen.shared import get_db_connection, load_csvs_to_raw, RAW_TABLES, DATA_DIR
+from data_gen import prod_guard
+from data_gen.shared import db_host_port, get_db_connection, load_csvs_to_raw, RAW_TABLES, DATA_DIR
 
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent
@@ -41,6 +42,8 @@ def load_raw(context: AssetExecutionContext):
 
 @asset(deps=[load_raw], description="Run dbt build (models + tests)")
 def dbt_build(context: AssetExecutionContext):
+    host, port = db_host_port()
+    prod_guard.check(host=host, port=port)  # dbt connects on its own; guard before it runs
     result = subprocess.run(
         ["dbt", "build", "--profiles-dir", str(DBT_DIR), "--project-dir", str(DBT_DIR)],
         capture_output=True, text=True, cwd=str(DBT_DIR),
