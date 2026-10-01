@@ -30,21 +30,33 @@ class ProdDatabaseError(RuntimeError):
 
 
 def _listener(port):
-    """Lowercased name (no .exe) of the process listening on local TCP `port`, or None."""
+    """Lowercased name (no .exe) of the process listening on local TCP `port`, or None.
+
+    Several processes can listen on one port: Docker on 0.0.0.0:5432 next to a
+    `fly proxy` on 127.0.0.1:5432, where a localhost connection reaches the
+    tunnel. So every listener is read and a fly owner wins. On Windows a
+    listener whose PID can't be resolved raises (fail closed); lsof on
+    macOS/Linux silently omits processes it can't see (e.g. another user's).
+    """
     if sys.platform == "win32":
         out = subprocess.run(["netstat", "-ano"], capture_output=True, text=True, check=True).stdout
+        pids = []
         for p in (line.split() for line in out.splitlines()):
-            if len(p) == 5 and p[0] == "TCP" and p[3] == "LISTENING" and p[1].rsplit(":", 1)[-1] == str(port):
-                row = subprocess.run(["tasklist", "/FI", f"PID eq {p[4]}", "/FO", "CSV", "/NH"],
-                                     capture_output=True, text=True, check=True).stdout.strip()
-                if not row.startswith('"'):
-                    raise RuntimeError(f"no process found for PID {p[4]}")
-                return row.split(",")[0].strip('"').lower().removesuffix(".exe")
-        return None
-    out = subprocess.run(["lsof", "-nP", f"-iTCP:{port}", "-sTCP:LISTEN", "-Fc"],
-                         capture_output=True, text=True).stdout
-    names = [line[1:].lower() for line in out.splitlines() if line.startswith("c")]
-    return names[0] if names else None
+            if (len(p) == 5 and p[0] == "TCP" and p[3] == "LISTENING"
+                    and p[1].rsplit(":", 1)[-1] == str(port) and p[4] not in pids):
+                pids.append(p[4])
+        names = []
+        for pid in pids:
+            row = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"],
+                                 capture_output=True, text=True, check=True).stdout.strip()
+            if not row.startswith('"'):
+                raise RuntimeError(f"no process found for PID {pid}")
+            names.append(row.split(",")[0].strip('"').lower().removesuffix(".exe"))
+    else:
+        out = subprocess.run(["lsof", "-nP", f"-iTCP:{port}", "-sTCP:LISTEN", "-Fc"],
+                             capture_output=True, text=True).stdout
+        names = [line[1:].lower() for line in out.splitlines() if line.startswith("c")]
+    return next((n for n in names if n in FLY_PROCS), names[0] if names else None)
 
 
 def _host_port(dsn):
