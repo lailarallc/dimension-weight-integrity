@@ -14,6 +14,7 @@ CLI (for dbt / Make / R pre-steps), exits non-zero when blocked:
 
     python prod_guard.py [DSN | host:port]  # defaults to $DATABASE_URL, then PGHOST/PGPORT
 """
+import ipaddress
 import os
 import re
 import subprocess
@@ -22,7 +23,7 @@ from urllib.parse import urlparse
 
 FLY_PROCS = {"flyctl", "fly"}
 FLY_HOST = re.compile(r"\.(fly\.dev|flycast|internal)$")
-LOOPBACK = {"", "localhost", "127.0.0.1", "::1"}
+LOCAL_NAMES = {"", "localhost"}
 
 
 class ProdDatabaseError(RuntimeError):
@@ -59,6 +60,23 @@ def _listener(port):
     return next((n for n in names if n in FLY_PROCS), names[0] if names else None)
 
 
+def _is_local(host):
+    """True if `host` reaches a listener on this machine.
+
+    localhost, all of 127.0.0.0/8, ::1, 0.0.0.0 and :: (and their IPv4-mapped
+    IPv6 forms): a `fly proxy` bound on any of them is reachable there.
+    """
+    if host in LOCAL_NAMES:
+        return True
+    try:
+        ip = ipaddress.ip_address(host.strip("[]"))
+    except ValueError:
+        return False
+    if ip.version == 6 and ip.ipv4_mapped:
+        ip = ip.ipv4_mapped
+    return ip.is_loopback or ip.is_unspecified
+
+
 def _host_port(dsn):
     if "://" in dsn:
         u = urlparse(dsn)
@@ -77,7 +95,7 @@ def check(dsn=None, host=None, port=None):
     port = int(port or os.environ.get("PGPORT") or 5432)
     if FLY_HOST.search(host):
         raise ProdDatabaseError(f"{host} is a Fly host (production). Set ALLOW_PROD_DB=1 if you mean it.")
-    if host in LOOPBACK:
+    if _is_local(host):
         try:
             proc = _listener(port)
         except Exception as e:  # fail closed: an unknown owner is treated as production
