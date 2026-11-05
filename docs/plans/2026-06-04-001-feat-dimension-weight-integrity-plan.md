@@ -84,7 +84,7 @@ Specialty food brands manage product physical attributes across four systems (ER
 - **DIM divisors**: FedEx and UPS both use 139 (all domestic). USPS changing from 166 to 139 in July 2026. Source: carrier official documentation.
 - **DIM rounding**: As of August 2025, FedEx and UPS round each fractional dimension up to nearest whole inch before computing DIM weight.
 - **LTL class-step cost**: 15-25% cost increase per class step (industry benchmark, not published tariff). Reclassification inspection fee: $75-$150/shipment. Source: logistics practitioner guides.
-- **Chargebacks**: Walmart SQEP $200 base per defect category per PO + $4/non-compliant pallet. Costco 2% of invoice for non-compliant packaging. Industry-wide: 2-10% of annual revenue for non-compliant suppliers. Source: Inmar Inc., Walmart Supplier Center, Industrial Packaging.
+- **Chargebacks**: Walmart SQEP $200 base per defect category per PO + $4/non-compliant pallet. Costco 2% of invoice for non-compliant packaging. Industry-wide: 2-10% of annual revenue for non-compliant suppliers. Source: Inmar Inc., Walmart Supplier Center, Industrial Packaging. <!-- label-ok: published fee schedules, no Cinderhaven figure -->
 - **Dimension-specific chargeback %**: Not published as a standalone category. Model as a subset of pallet/packaging violations. Label as modeled assumption.
 
 ---
