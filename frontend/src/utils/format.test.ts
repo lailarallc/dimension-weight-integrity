@@ -7,6 +7,11 @@ describe('formatCurrency', () => {
     expect(formatCurrency(1014.28)).toBe('$1,014.28')
   })
 
+  it('keeps the trailing zero when there are cents', () => {
+    expect(formatCurrency(10167.9)).toBe('$10,167.90')
+    expect(formatCurrency(394)).toBe('$394')
+  })
+
   it('uses compact notation for large values', () => {
     const result = formatCurrency(150000)
     expect(result).toMatch(/\$150K/)
