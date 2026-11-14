@@ -29,6 +29,12 @@ export default function App() {
     }
   }
 
+  // Mismatched SKUs whose freight reclass costs money. A shift to a cheaper
+  // class is still a mismatch, but its freight cost floors at zero.
+  const freightCostSkus = allSkusData.skus.filter(
+    (s) => (s.cost.drivers.ltl_reclass?.annual_cost ?? 0) > 0,
+  ).length
+
   return (
     <div className="app">
       <header className="app-header">
@@ -44,10 +50,12 @@ export default function App() {
             leaks from this 50-SKU portfolio every year.
           </p>
           <p className="hero-stat-range">
-            Modeled on revenue spread evenly across the catalog. Twenty of the
-            fifty SKUs carry freight exposure, so concentrating volume on those
-            raises this to $565K; concentrating it on the clean SKUs lowers it
-            to $64.4K.
+            Modeled on revenue spread evenly across the catalog.{' '}
+            {allSkusData.aggregate.skus_with_class_mismatch} of the{' '}
+            {allSkusData.aggregate.total_skus} SKUs have a freight class
+            mismatch, and {freightCostSkus} of those carry a freight cost.
+            Concentrating volume on those {freightCostSkus} raises this to
+            $565K; concentrating it on the other SKUs lowers it to $64.4K.
           </p>
           <p className="hero-stat-disclosure">
             Synthetic dataset &mdash; a modeled ~$25M specialty food portfolio.
