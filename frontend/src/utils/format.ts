@@ -1,7 +1,13 @@
-const currencyFmt = new Intl.NumberFormat('en-US', {
+const wholeCurrencyFmt = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'USD',
-  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+})
+
+const centsCurrencyFmt = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 })
 
@@ -14,7 +20,12 @@ const compactCurrencyFmt = new Intl.NumberFormat('en-US', {
 
 export function formatCurrency(value: number): string {
   if (Math.abs(value) >= 100_000) return compactCurrencyFmt.format(value)
-  return currencyFmt.format(value)
+  // Whole dollars show no cents; anything else shows both digits, so
+  // $10,167.90 never renders as $10,167.9.
+  const cents = Math.round(value * 100)
+  return cents % 100 === 0
+    ? wholeCurrencyFmt.format(cents / 100)
+    : centsCurrencyFmt.format(value)
 }
 
 /** Annual volume counts. Whole units get thousands separators; the
