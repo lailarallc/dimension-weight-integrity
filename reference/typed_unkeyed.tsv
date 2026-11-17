@@ -1,0 +1,47 @@
+# Typed figures this repo prints with no canon key (owner, 2026-11-15; plan U19, U22).
+# One row per figure per location. The platform's fleet check holds the row count to a ceiling that only
+# falls: give a figure a key (or stop printing it) and delete its row. listed=yes: the read map names it, and
+# U19 owes its key; listed=no: U22 works it down. Generated from the 2026-11-15 manifest pass.
+file_line	printed	exact_value	meaning	source	kind	listed
+README.md:24	freight class 55 instead of the correct class 50	55	hero GDSN freight class vs measurement-of-record class 50	frontend/src/data/hero.json freight_by_system	repo-export	yes
+README.md:24	37.98 lb/ft³	37.97802197802198	hero SKU CHP-AS-002 density from GDSN dims	frontend/src/data/hero.json hero_sku.freight_by_system.gdsn.density	repo-export	no
+README.md:24	$0.39/case	0.39	hero LTL reclass cost per case	frontend/src/data/hero.json:134 cost.ltl_reclass.per_unit_delta	repo-export	no
+README.md:24	10,851 cases/yr	10851	hero annual case volume	frontend/src/data/hero.json:135 cost.ltl_reclass.annual_units (derived from config/cost_params.yml)	repo-export	no
+README.md:24	$4,231.89/yr	4231.89	hero LTL reclassification annual cost	frontend/src/data/hero.json:136 cost.ltl_reclass.annual_cost	repo-export	no
+README.md:25	1.00 lb	1.0	hero Shopify listed ship weight	frontend/src/data/hero.json cost.parcel_reweigh.basis.shopify_weight_lb	repo-export	no
+README.md:25	2.05 lb ... billable at 3 lb	2.05	hero actual parcel gross weight; billable 3 lb	frontend/src/data/hero.json cost.parcel_reweigh.basis	repo-export	no
+README.md:25	$1.97/shipment	1.97	hero parcel reweigh cost per shipment	frontend/src/data/hero.json:147	repo-export	no
+README.md:25	200 orders/yr	200	DTC orders per SKU per year	config/cost_params.yml:133 annual_dtc_orders_per_sku	assumption	no
+README.md:25	$394/yr	394.0	hero parcel reweigh annual cost	frontend/src/data/hero.json:149	repo-export	no
+README.md:26	$200/event	200	compliance chargeback cost per event	config/cost_params.yml:153 per_event_cost	assumption	no
+README.md:26	1.2 expected events/yr	1.2	expected chargeback events per year (3 x 0.40)	frontend/src/data/hero.json:159; config/cost_params.yml:156	repo-export	no
+README.md:26	$240/yr	240.0	hero compliance chargeback annual cost	frontend/src/data/hero.json:160	repo-export	no
+README.md:26	~40%	40	share of divergent SKUs incurring chargebacks	config/cost_params.yml:156 affected_sku_pct	assumption	no
+README.md:28	$208,310.87	208310.87	portfolio annual divergence cost, 50 SKUs, revenue spread evenly	frontend/src/data/all_skus.json:1405 aggregate.total_annual_cost; scripts/export_frontend_json.py:29-32 over its own public_marts (dbt fct_dimension_cost.sql) built from data_gen over raw.product_master (data_gen/shared.py:29-43)	repo-export	yes
+README.md:28	$4,865.89	4865.89	hero SKU total annual divergence cost	frontend/src/data/hero.json cost sum; tests/test_demo_golden.py:87	repo-export	no
+config/cost_params.yml:102	208310.87	208310.87	portfolio cost, revenue even (reference band)	constant; = frontend/src/data/all_skus.json aggregate	repo-export	yes
+config/cost_params.yml:105	64428	64428	portfolio cost band low (volume on clean SKUs)	constant from sensitivity simulation	fixed-input	yes
+config/cost_params.yml:106	564713	564713	portfolio cost band high (volume on divergent SKUs)	constant from sensitivity simulation	fixed-input	yes
+config/cost_params.yml:107	500000.00	500000	annual wholesale revenue per SKU ($25M / 50 SKUs)	constant; derived from CINDERHAVEN_CANONICAL ~$25M and 50 SKUs	assumption	yes
+config/cost_params.yml:108	3.84 ($7.67 MSRP x 0.5000)	3.84	wholesale price per unit; catalog mean MSRP $7.67 x blended wholesale multiplier	constant; from seed catalog	assumption	yes
+config/cost_params.yml:133	200	200	DTC orders per SKU per year	constant	assumption	no
+config/cost_params.yml:153	200.00	200	compliance chargeback $ per event	constant (Walmart SQEP base)	assumption	no
+config/cost_params.yml:156	0.40	0.40	fraction of divergent SKUs incurring chargebacks	constant	assumption	no
+frontend/src/App.tsx:41	{formatCurrency(total)} (renders $208K)	208310.87	portfolio annual divergence cost (hero stat)	frontend/src/data/all_skus.json aggregate.total_annual_cost	repo-export	no
+frontend/src/App.tsx:47	Twenty of the fifty SKUs carry freight exposure	20	SKUs with freight exposure (note: all_skus aggregate says 27 class mismatches)	prose only	prose-only	no
+frontend/src/App.tsx:49	$565K	564713	portfolio cost with volume on divergent SKUs (80/20 Pareto)	config/cost_params.yml:106 volume_on_divergent	fixed-input	no
+frontend/src/App.tsx:50	$64.4K	64428	portfolio cost with volume on clean SKUs (80/20 Pareto)	config/cost_params.yml:105 volume_on_clean	fixed-input	no
+frontend/src/data/all_skus.json:1405	208310.87	208310.87	portfolio annual divergence cost	scripts/export_frontend_json.py:29-32 over its own public_marts (dbt fct_dimension_cost.sql) built from data_gen over raw.product_master (data_gen/shared.py:29-43)	repo-export	yes
+frontend/src/data/all_skus.json:1406	27	27	SKUs with freight class mismatch	scripts/export_frontend_json.py:29-32 over its own public_marts (dbt fct_dimension_cost.sql) built from data_gen over raw.product_master (data_gen/shared.py:29-43)	repo-export	no
+tests/test_demo_golden.py:69	0.29052734375	0.29052734375	hero MOR case cube ft3	asserted against frontend/src/data/hero.json / frontend/src/data/all_skus.json	repo-export	no
+tests/test_demo_golden.py:70	74.00336134453782	74.00336134453782	hero MOR density lb/ft3	asserted against frontend/src/data/hero.json / frontend/src/data/all_skus.json	repo-export	no
+tests/test_demo_golden.py:75	37.97802197802198	37.97802197802198	hero GDSN density	asserted against frontend/src/data/hero.json / frontend/src/data/all_skus.json	repo-export	no
+tests/test_demo_golden.py:76	55.0	55.0	hero GDSN freight class	asserted against frontend/src/data/hero.json / frontend/src/data/all_skus.json	repo-export	no
+tests/test_demo_golden.py:79	0.39	0.39	hero LTL per-case delta	asserted against frontend/src/data/hero.json / frontend/src/data/all_skus.json	repo-export	no
+tests/test_demo_golden.py:80	10851.0	10851.0	hero annual cases	asserted against frontend/src/data/hero.json / frontend/src/data/all_skus.json	repo-export	no
+tests/test_demo_golden.py:81	4231.89	4231.89	hero LTL annual cost	asserted against frontend/src/data/hero.json / frontend/src/data/all_skus.json	repo-export	no
+tests/test_demo_golden.py:82	394.0	394.0	hero parcel annual cost	asserted against frontend/src/data/hero.json / frontend/src/data/all_skus.json	repo-export	no
+tests/test_demo_golden.py:83	240.0	240.0	hero compliance annual cost	asserted against frontend/src/data/hero.json / frontend/src/data/all_skus.json	repo-export	no
+tests/test_demo_golden.py:87	4865.89	4865.89	hero total annual cost	asserted against frontend/src/data/hero.json / frontend/src/data/all_skus.json	repo-export	no
+tests/test_demo_golden.py:95	208310.87	208310.87	portfolio annual cost	asserted against frontend/src/data/hero.json / frontend/src/data/all_skus.json	repo-export	yes
+tests/test_demo_golden.py:96	27	27	SKUs with class mismatch	asserted against frontend/src/data/hero.json / frontend/src/data/all_skus.json	repo-export	no

@@ -1,5 +1,5 @@
 # Retired Cinderhaven figures/strings — generated from canonical_values.yml `supersedes:` by verify_canonical.py.
-# generated 2026-10-01 | platform deb0175
+# generated 2026-11-17 | platform 1f20fa4
 # The drift gate fails a build on any hit (excluding history/SUPERSEDES docs and per-repo allowlists). Do not edit by hand.
 Cinderhaven Foods
 Wegmans

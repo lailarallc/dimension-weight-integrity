@@ -1,13 +1,26 @@
 #!/usr/bin/env python3
-"""Refresh this repo's vendored canon from the cinderhaven-data-platform.
+"""Refresh this repo's vendored canon + gate from the cinderhaven-data-platform.
 
-Copies the platform's generated artifacts into reference/:
-  - canonical_values.json  (the machine-readable canon; tests read it)
-  - supersedes.txt         (retired-figure list; the drift gate reads it)
+Copies the platform's synced artifacts into this repo:
+  reference/canonical_values.json  (the machine-readable canon; tests read it)
+  reference/supersedes.txt         (retired-figure list; the drift gate reads it)
+  reference/retailer_display_labels.json (public labels for trade partners;
+                                    tool UIs and check_retailer_labels.py read it)
+  scripts/check_canonical_drift.py (the drift gate itself — synced so every repo
+                                    runs the SAME, current gate implementation)
+  scripts/refresh_canonical.py     (this script — self-syncs so the next refresh
+                                    is always the latest version)
+  quarantine/truth_gate.py, quarantine/text_scan.py
+                                   (the truth quarantine gate; a consumer runs
+                                    it over its own estimation code. A copy of
+                                    this script older than the gate delivers the
+                                    new script first and the gate on the next run)
 
-The platform generates both on every `verify_canonical.py` run. This is a
-DEV-TIME tool: run it after the canon changes, review the diff, commit the
-vendored copies. It is NOT part of CI (the vendored files are committed).
+The platform regenerates the two reference artifacts on every
+`verify_canonical.py` run; the two scripts are maintained in the platform's
+scripts/. This is a DEV-TIME tool: run it after the canon or gate changes,
+review the diff, commit the vendored copies. It is NOT part of CI (the vendored
+files are committed).
 
 Platform location resolution, in order:
   1. $CINDERHAVEN_PLATFORM (path to the platform repo root)
@@ -22,8 +35,19 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-DEST = REPO / "reference"
-ARTIFACTS = ("canonical_values.json", "supersedes.txt")
+# (platform-relative source dir, artifact filename, repo-relative dest dir)
+ARTIFACTS = (
+    ("reference", "canonical_values.json", "reference"),
+    ("reference", "supersedes.txt", "reference"),
+    ("reference", "retailer_display_labels.json", "reference"),
+    ("scripts", "check_canonical_drift.py", "scripts"),
+    ("scripts", "check_retailer_labels.py", "scripts"),
+    ("scripts", "refresh_canonical.py", "scripts"),
+    # The truth quarantine gate (plan U4): lands in the consumer's own
+    # quarantine/, outside its estimation code, as loose files.
+    ("quarantine", "truth_gate.py", "quarantine"),
+    ("quarantine", "text_scan.py", "quarantine"),
+)
 
 CANDIDATES = [
     os.environ.get("CINDERHAVEN_PLATFORM", ""),
@@ -50,20 +74,21 @@ def find_platform() -> Path:
 
 def main() -> int:
     platform = find_platform()
-    src = platform / "reference"
-    missing = [a for a in ARTIFACTS if not (src / a).exists()]
+    missing = [f"{sd}/{name}" for sd, name, _ in ARTIFACTS
+               if not (platform / sd / name).exists()]
     if missing:
         print(
-            f"ERROR: {platform.name} has not generated {missing}. Run its "
-            f"scripts/verify_canonical.py first (it emits both artifacts).",
+            f"ERROR: {platform.name} is missing {missing}. Run its "
+            f"scripts/verify_canonical.py first (it emits the reference "
+            f"artifacts); the scripts live in the platform's scripts/.",
             file=sys.stderr,
         )
         return 1
-    DEST.mkdir(parents=True, exist_ok=True)
-    for a in ARTIFACTS:
-        shutil.copyfile(src / a, DEST / a)
-        print(f"  vendored {a}  <-  {platform.name}")
-    print("done. Review `git diff reference/` and commit.")
+    for src_dir, name, dest_dir in ARTIFACTS:
+        (REPO / dest_dir).mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(platform / src_dir / name, REPO / dest_dir / name)
+        print(f"  vendored {dest_dir}/{name}  <-  {platform.name}")
+    print("done. Review `git diff reference/ scripts/ quarantine/` and commit.")
     return 0
 
 

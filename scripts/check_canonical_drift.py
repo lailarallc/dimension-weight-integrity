@@ -26,6 +26,16 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Hit lines can contain non-cp1252 characters (en-dashes, "≠", ¢). Force UTF-8
+# so printing the drift report doesn't crash on a Windows console (cp1252
+# default) — matches verify_canonical.py. A gate that dies mid-report exits
+# non-zero with no actionable output.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
 ROOT = Path(__file__).resolve().parent.parent
 SUPERSEDES = ROOT / "reference" / "supersedes.txt"
 ALLOWLIST = ROOT / ".canonical-allowlist"
@@ -112,19 +122,24 @@ def tracked_files() -> list[str]:
 
 
 def _glob_match(path: str, glob: str) -> bool:
-    """True if `glob` matches the full posix path or its basename. fnmatch's
-    `*` spans `/`, so a path glob like 'a/research/*' also matches deeper files."""
-    name = Path(path).name
-    return fnmatch.fnmatch(path, glob) or fnmatch.fnmatch(name, glob)
+    """True if `glob` matches the full posix path or its basename, case-
+    insensitively. Uses fnmatchcase on lowercased operands so the result is the
+    SAME on Windows and Linux (bare fnmatch is case-insensitive on Windows but
+    case-sensitive on Linux — a gate that passed locally would then fail CI).
+    fnmatch's `*` spans `/`, so a path glob like 'a/research/*' also matches
+    deeper files."""
+    p, g = path.lower(), glob.lower()
+    name = Path(path).name.lower()
+    return fnmatch.fnmatchcase(p, g) or fnmatch.fnmatchcase(name, g)
 
 
 def excluded(path: str, extra_globs: list[str]) -> bool:
     if set(Path(path).parts) & SKIP_DIR_PARTS:
         return True
     name = Path(path).name
-    if name in EXCLUDE_BASENAMES:
+    if name.lower() in {b.lower() for b in EXCLUDE_BASENAMES}:
         return True
-    if any(fnmatch.fnmatch(name, g) for g in EXCLUDE_BASENAME_GLOBS):
+    if any(fnmatch.fnmatchcase(name.lower(), g.lower()) for g in EXCLUDE_BASENAME_GLOBS):
         return True
     if any(_glob_match(path, g) for g in extra_globs):
         return True
@@ -146,13 +161,18 @@ def main() -> int:
             text = p.read_text(encoding="utf-8", errors="strict")
         except (UnicodeDecodeError, OSError):
             continue  # binary or unreadable — not a text surface
+        # Case-insensitive: EDI renders sender names uppercase ("CINDERHAVEN
+        # FOODS") and prose may lowercase a token — both must still be caught.
+        # casefold() is the aggressive-fold Unicode form; compare fold-to-fold.
+        text_cf = text.casefold()
         for tok in tokens:
-            if tok in text:
+            tok_cf = tok.casefold()
+            if tok_cf in text_cf:
                 if any(t == tok and _glob_match(rel, g)
                        for t, g in token_excepts):
                     continue
                 for i, ln in enumerate(text.splitlines(), 1):
-                    if tok in ln:
+                    if tok_cf in ln.casefold():
                         hits.append(f"  {rel}:{i}: [{tok}]  {ln.strip()[:100]}")
 
     if hits:
