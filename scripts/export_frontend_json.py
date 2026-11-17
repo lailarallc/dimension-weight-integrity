@@ -26,10 +26,10 @@ class DecimalEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
-MART_GOVERNED_MASTER = "public_marts.fct_governed_product_master"
-MART_DIVERGENCE = "public_marts.fct_attribute_divergence"
-MART_FREIGHT_CLASS = "public_marts.fct_freight_class_by_system"
-MART_COSTS = "public_marts.fct_dimension_cost"
+MART_GOVERNED_MASTER = "dimension_weight_integrity.fct_governed_product_master"
+MART_DIVERGENCE = "dimension_weight_integrity.fct_attribute_divergence"
+MART_FREIGHT_CLASS = "dimension_weight_integrity.fct_freight_class_by_system"
+MART_COSTS = "dimension_weight_integrity.fct_dimension_cost"
 
 
 def query_mart(cur, table, sku=None):

@@ -8,5 +8,5 @@ dimension_weight_integrity:
       user: "{{ env_var('CINDERHAVEN_DB_USER', 'postgres') }}"
       password: "{{ env_var('CINDERHAVEN_DB_PASSWORD', '') }}"
       dbname: "{{ env_var('CINDERHAVEN_DB_NAME', 'cinderhaven') }}"
-      schema: public
+      schema: dimension_weight_integrity
       threads: 4

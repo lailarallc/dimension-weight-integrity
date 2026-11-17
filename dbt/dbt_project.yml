@@ -68,14 +68,16 @@ vars:
   # Packaging offset (unit net weight → DTC parcel gross)
   packaging_offset_lb: 1.05
 
+# Every model builds into this repo's own schema, never a platform schema (U19a;
+# public_staging / public_intermediate / public_marts are the platform's).
 models:
   dimension_weight_integrity:
     staging:
-      +schema: public_staging
+      +schema: dimension_weight_integrity
       +materialized: view
     intermediate:
-      +schema: public_intermediate
+      +schema: dimension_weight_integrity
       +materialized: view
     marts:
-      +schema: public_marts
+      +schema: dimension_weight_integrity
       +materialized: table

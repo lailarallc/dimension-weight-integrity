@@ -18,6 +18,12 @@ DATA_DIR = PROJECT_ROOT / "data" / "generated"
 
 HERO_SKU_ID = "CHP-AS-002"
 
+# This repo's own schema (U19a: no consumer writes a platform schema). The
+# source tables load here and dbt builds every model here (dbt/dbt_project.yml,
+# dbt/profiles.yml, the source in dbt/models/staging/schema.yml). In production
+# the platform's owner-run scripts/move_writer_tables.ps1 creates it.
+SCHEMA = "dimension_weight_integrity"
+
 # Raw source tables loaded from generated CSVs (shared by the standalone
 # load_raw script and the Dagster load_raw asset).
 RAW_TABLES = {
@@ -45,7 +51,7 @@ PRODUCT_MASTER_QUERY = """
 
 
 def load_csvs_to_raw(conn, data_dir, tables, log=print):
-    """Load CSV files into Postgres raw tables as text columns.
+    """Load CSV files into this repo's schema (SCHEMA) as text columns.
 
     `tables` maps {table_name: csv_filename}. Each table is dropped (cascade,
     so dependent dbt views don't block the reload) and recreated from the CSV
@@ -53,11 +59,17 @@ def load_csvs_to_raw(conn, data_dir, tables, log=print):
     connection's lifecycle (open/close).
     """
     with conn.cursor() as cur:
+        cur.execute("select 1 from pg_namespace where nspname = %s", (SCHEMA,))
+        if cur.fetchone() is None:
+            # Only a missing schema is made here: Postgres tests the database
+            # privilege before IF NOT EXISTS.
+            cur.execute(sql.SQL("create schema {}").format(sql.Identifier(SCHEMA)))
+            conn.commit()
         for table_name, csv_file in tables.items():
             with open(pathlib.Path(data_dir) / csv_file, encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 columns = reader.fieldnames
-                tbl = sql.Identifier(table_name)
+                tbl = sql.Identifier(SCHEMA, table_name)
                 col_ids = sql.SQL(", ").join(sql.Identifier(c) for c in columns)
                 col_defs = sql.SQL(", ").join(
                     sql.SQL("{} text").format(sql.Identifier(c)) for c in columns
